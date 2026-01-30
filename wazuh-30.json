@@ -1,0 +1,413 @@
+{
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -752,
+        -112
+      ],
+      "id": "d965e9e5-f0d2-4aea-9e41-944bbc0356c4",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.virustotal.com/api/v3/ip_addresses/{{ $json.data.srcip }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-apikey",
+              "value": "a14078121fa49abf155f3a8f4d5314f8c01bb0c39ab1759791ffbda3dcf9f989"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -480,
+        -112
+      ],
+      "id": "e8a07e3b-e29e-442b-9d48-5437af3179b9",
+      "name": "IP CHECKER"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "=Security Incident Report –{{ $('When clicking ‘Execute workflow’').item.json.rule.description }}\n\nIncident Summary\nIncident Type: {{ $('When clicking ‘Execute workflow’').item.json.rule.description }}\nDetection Source: Wazuh SIEM\nEnrichment Source: VirusTotal\nSeverity Level: {{ $('When clicking ‘Execute workflow’').item.json.rule.id }}\nDetection Time: {{ $('When clicking ‘Execute workflow’').item.json.timestamp }}\n\n\nAffected System\nHost Name: {{ $('When clicking ‘Execute workflow’').item.json.agent.name }}\nHost IP : {{ $('When clicking ‘Execute workflow’').item.json.agent.ip }}\nAgent ID: {{ $('When clicking ‘Execute workflow’').item.json.agent.id }}\n\n\nAttacker Information\nAttacker IP: {{ $('When clicking ‘Execute workflow’').item.json.data.srcip }}\nCountry: {{ $('IP CHECKER').item.json.data.attributes.rdap.country }}\nAttacker city : {{ $('IP LOCATION').item.json.city }}\nRegion : {{ $('IP LOCATION').item.json.region }}\nOrg : {{ $('IP LOCATION').item.json.org }}\nTime Zone : {{ $('IP LOCATION').item.json.timezone }}\nLOC : {{ $('IP LOCATION').item.json.loc }}\n\n\nAttack Evidence\nAttack Description: {{ $('When clicking ‘Execute workflow’').item.json.rule.description }}\nSource IP: {{ $('When clicking ‘Execute workflow’').item.json.data.srcip }}\nTarget User: {{ $('When clicking ‘Execute workflow’').item.json.agent.name }}\n\n\nRaw Log Evidence:\n{{ $('When clicking ‘Execute workflow’').item.json.location }}\n\n\nReport Generated Automatically\nGenerated Time: {{$now}}\n"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -112
+      ],
+      "id": "64ae8309-14ec-4a3c-ab3a-5cb14338778f",
+      "name": "UPDATE ATTACKER IP DOC",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "nqb5U3CczYm4Mdti",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://ipinfo.io/{{ $('When clicking ‘Execute workflow’').item.json.data.srcip }}/json ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -304,
+        -112
+      ],
+      "id": "562de8ea-e660-4b37-b651-47ce67504524",
+      "name": "IP LOCATION"
+    },
+    {
+      "parameters": {
+        "sendTo": "mahimahenthiran451@gmail.com,mahenthiran0802@gmail.com",
+        "subject": "={{ $('When clicking ‘Execute workflow’').item.json.rule.description }}",
+        "message": "=<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<title>Security Incident Alert</title>\n\n<style>\n@media (prefers-color-scheme: dark) {\n  body { background:#0f172a !important; }\n  .card { background:#1e293b !important; color:#e5e7eb !important; }\n  .muted { color:#94a3b8 !important; }\n  .box { background:#020617 !important; border-color:#334155 !important; }\n}\n</style>\n</head>\n\n<body style=\"margin:0;padding:0;background:#f4f6f8;font-family:Arial,Helvetica,sans-serif;\">\n\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"padding:20px;\">\n<tr>\n<td align=\"center\">\n\n<table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" class=\"card\"\nstyle=\"background:#ffffff;border-radius:12px;overflow:hidden;\nbox-shadow:0 8px 24px rgba(0,0,0,0.08);\">\n\n<!-- HEADER -->\n<tr>\n<td style=\"background:#111827;color:#ffffff;padding:20px 24px;\">\n<h1 style=\"margin:0;font-size:22px;\">\n🚨 Security Incident – {{ $('When clicking ‘Execute workflow’').item.json.rule.description }}\n</h1>\n<p style=\"margin:6px 0 0;font-size:13px;opacity:0.85;\">\nAutomated SOC Notification\n</p>\n</td>\n</tr>\n\n<!-- SUMMARY -->\n<tr>\n<td style=\"padding:24px;\">\n<table width=\"100%\" style=\"font-size:14px;\">\n<tr>\n<td class=\"muted\" style=\"padding:8px;\">Severity</td>\n<td style=\"padding:8px;\">\n<span style=\"\nbackground:{{ $json.severity_color }};\ncolor:#ffffff;\npadding:6px 14px;\nborder-radius:20px;\nfont-weight:bold;\nfont-size:12px;\">\n{{ $json.severity_text }}\n</span>\n</td>\n</tr>\n\n<tr>\n<td class=\"muted\" style=\"padding:8px;\">Detection Time</td>\n<td style=\"padding:8px;\">\n{{ $('When clicking ‘Execute workflow’').item.json.timestamp }}\n</td>\n</tr>\n\n<tr>\n<td class=\"muted\" style=\"padding:8px;\">Detection Source</td>\n<td style=\"padding:8px;\">Wazuh SIEM</td>\n</tr>\n</table>\n</td>\n</tr>\n\n<!-- AFFECTED SYSTEM -->\n<tr>\n<td style=\"padding:0 24px 24px;\">\n<h2 style=\"margin:0 0 12px;font-size:18px;\">Affected System</h2>\n<table width=\"100%\" style=\"font-size:14px;\">\n<tr>\n<td class=\"muted\" style=\"padding:8px;\">Host</td>\n<td style=\"padding:8px;\">\n{{ $('When clicking ‘Execute workflow’').item.json.agent.name }}\n</td>\n</tr>\n<tr>\n<td class=\"muted\" style=\"padding:8px;\">Host IP</td>\n<td style=\"padding:8px;\">\n{{ $('When clicking ‘Execute workflow’').item.json.agent.ip }}\n</td>\n</tr>\n</table>\n</td>\n</tr>\n\n<!-- ATTACKER INFO -->\n<tr>\n<td style=\"padding:0 24px 24px;\">\n<h2 style=\"margin:0 0 12px;font-size:18px;\">Attacker Information</h2>\n<table width=\"100%\" style=\"font-size:14px;\">\n<tr>\n<td class=\"muted\" style=\"padding:8px;\">Attacker IP</td>\n<td style=\"padding:8px;\">\n{{ $('When clicking ‘Execute workflow’').item.json.data.srcip }}\n</td>\n</tr>\n\n<tr>\n<td class=\"muted\" style=\"padding:8px;\">Location</td>\n<td style=\"padding:8px;\">\n{{ $('IP LOCATION').item.json.city }},\n{{ $('IP LOCATION').item.json.region }},\n{{ $('IP LOCATION').item.json.country }}\n</td>\n</tr>\n\n<tr>\n<td class=\"muted\" style=\"padding:8px;\">Organization</td>\n<td style=\"padding:8px;\">\n{{ $('IP LOCATION').item.json.org }}\n</td>\n</tr>\n\n<tr>\n<td class=\"muted\" style=\"padding:8px;\">Map</td>\n<td style=\"padding:8px;\">\n<a href=\"https://www.google.com/maps?q={{ $('IP LOCATION').item.json.loc }}\"\nstyle=\"color:#2563eb;text-decoration:none;font-weight:bold;\">\nView Attacker Location\n</a>\n</td>\n</tr>\n</table>\n</td>\n</tr>\n\n<!-- RAW LOG -->\n<tr>\n<td style=\"padding:0 24px 24px;\">\n<h2 style=\"margin:0 0 10px;font-size:18px;\">Raw Log Evidence</h2>\n<div class=\"box\" style=\"\nbackground:#f9fafb;\nborder:1px solid #e5e7eb;\nborder-radius:8px;\npadding:12px;\nfont-size:12px;\nline-height:1.6;\">\n{{ $('When clicking ‘Execute workflow’').item.json.location }}\n</div>\n</td>\n</tr>\n\n<!-- FOOTER -->\n<tr>\n<td style=\"background:#f9fafb;padding:16px 24px;\nfont-size:12px;color:#6b7280;text-align:center;\">\nReport generated automatically by SOC Automation Platform<br>\nGenerated at: {{$now}}<br>\nDo not reply to this email\n</td>\n</tr>\n\n</table>\n\n</td>\n</tr>\n</table>\n\n</body>\n</html>\n",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        464,
+        -112
+      ],
+      "id": "4169ccb5-08fc-4c34-8f3d-3176be0f3550",
+      "name": "EMAIL",
+      "webhookId": "8ab50dd7-361c-42c0-aacf-cdc0fb642d5f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HP64vjkg0u7auihe",
+          "name": "maaahi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('ATTACKER DATA').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        272,
+        -112
+      ],
+      "id": "df3907bc-e37d-4c56-ad37-727196ad4f20",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "5uBAb9mYyPtLpEJ6",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://www.virustotal.com/api/v3/analyses/{{ $json.data.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-apikey",
+              "value": "a14078121fa49abf155f3a8f4d5314f8c01bb0c39ab1759791ffbda3dcf9f989"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -272,
+        64
+      ],
+      "id": "65cb3134-89e6-4e79-a3e5-4c5817384b7c",
+      "name": "URL ANALYSIS"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.virustotal.com/api/v3/urls",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-apikey",
+              "value": "a14078121fa49abf155f3a8f4d5314f8c01bb0c39ab1759791ffbda3dcf9f989"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json.data.visited_url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -464,
+        64
+      ],
+      "id": "41ebf78f-c94f-4ccf-ab6d-4448b8ac5d75",
+      "name": "URL  FETCH"
+    },
+    {
+      "parameters": {
+        "folderId": "1e_TtJqxe_ARhuZRUBS8KRA1maVSrafjD",
+        "title": "={{ $('When clicking ‘Execute workflow’').item.json.rule.id }}:UNSAFE URL DETAILS!!!"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        64
+      ],
+      "id": "1afed2ba-390f-4b8a-8726-887e18dc02da",
+      "name": "URL DOC",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "nqb5U3CczYm4Mdti",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "=Security Incident Report – Unsafe Website Access\n\nIncident Summary\nIncident Type: Unsafe / Non-Secure Website Access\nDetection Source: Wazuh SIEM\nEnrichment Source: VirusTotal\nDetection Time (Epoch): {{ $('When clicking ‘Execute workflow’').item.json.timestamp }}\nAnalysis Status: {{ $('VT URL ANALYSIS').item.json.data.attributes.status }}\n\nAffected User & System\nUser: {{ $('Webhook').item.json.data.user }}\nHost Name: {{ $('Webhook').item.json.agent.name }}\nHost IP: {{ $('Webhook').item.json.agent.ip }}\nAgent ID: {{ $('Webhook').item.json.agent.id }}\n\nWebsite Details\nVisited URL: {{ $('VT URL ANALYSIS').item.json.data.attributes.url }}\nProtocol: HTTP\nAccess Method: Manual Browser Search\n\nVirusTotal Analysis Summary\nMalicious Detections: {{ $('VT URL ANALYSIS').item.json.data.attributes.stats.malicious }}\nSuspicious Flags: {{ $('VT URL ANALYSIS').item.json.data.attributes.stats.suspicious }}\nHarmless Reports: {{ $('VT URL ANALYSIS').item.json.data.attributes.stats.harmless }}\nUndetected Engines: {{ $('VT URL ANALYSIS').item.json.data.attributes.stats.undetected }}\nTimeouts: {{ $('VT URL ANALYSIS').item.json.data.attributes.stats.timeout }}\n\nRisk Assessment\nOverall Verdict:\n{{ \n  $('VT URL ANALYSIS').item.json.data.attributes.stats.malicious > 0 \n  ? 'High Risk – Malicious URL detected'\n  : (\n      $('VT URL ANALYSIS').item.json.data.attributes.stats.suspicious > 0\n      ? 'Medium Risk – Suspicious indicators present'\n      : 'Low Risk – No malicious indicators detected'\n    )\n}}\n\nAnalysis Reasoning\nThe URL was analyzed using VirusTotal. Multiple security vendors marked the URL as harmless, and no malicious or suspicious detections were reported at the time of analysis. However, the website uses an unencrypted HTTP protocol, which poses a potential security risk.\n\nEvidence\nVirusTotal Analysis ID:\n{{ $('VT URL ANALYSIS').item.json.data.id }}\n\nVirusTotal Report Link:\n{{ $('VT URL ANALYSIS').item.json.data.links.self }}\n\nRaw Log Evidence\n{{ $('Webhook').item.json.full_log }}\n\nRecommended Action\n- Advise user to avoid accessing non-secure (HTTP) websites\n- Monitor repeated unsafe browsing behavior\n- Consider blocking the domain if accessed frequently\n\nReport Generated Automatically\nGenerated Time: {{$now}}\n"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        144,
+        64
+      ],
+      "id": "c2e39f98-82df-47fd-9f9c-6a1527533325",
+      "name": "UPDATE URL DOC",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "nqb5U3CczYm4Mdti",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## IP ANALYSIS ",
+        "height": 192,
+        "width": 1152,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -528,
+        -160
+      ],
+      "typeVersion": 1,
+      "id": "c1a44acc-3cbd-408a-85b3-699cda6464f7",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "folderId": "1e_TtJqxe_ARhuZRUBS8KRA1maVSrafjD",
+        "title": "={{ $('When clicking ‘Execute workflow’').item.json.rule.id }}:ATTACKER DETAILS "
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        -128,
+        -112
+      ],
+      "id": "603821ce-f6e6-48b3-afca-f835d084c5f7",
+      "name": "ATTACKER DATA",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "nqb5U3CczYm4Mdti",
+          "name": "Google Docs account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "URL  FETCH",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IP CHECKER": {
+      "main": [
+        [
+          {
+            "node": "IP LOCATION",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UPDATE ATTACKER IP DOC": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IP LOCATION": {
+      "main": [
+        [
+          {
+            "node": "ATTACKER DATA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "EMAIL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "URL ANALYSIS": {
+      "main": [
+        [
+          {
+            "node": "URL DOC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "URL  FETCH": {
+      "main": [
+        [
+          {
+            "node": "URL ANALYSIS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "URL DOC": {
+      "main": [
+        [
+          {
+            "node": "UPDATE URL DOC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ATTACKER DATA": {
+      "main": [
+        [
+          {
+            "node": "UPDATE ATTACKER IP DOC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "When clicking ‘Execute workflow’": [
+      {
+        "timestamp": "2026-01-15T12:18:40+05:30",
+        "rule": {
+          "id": "88021",
+          "level": 6,
+          "description": "User accessed an unsafe or non-secure external website"
+        },
+        "agent": {
+          "id": "021",
+          "name": "employee-laptop-21",
+          "ip": "192.168.20.35"
+        },
+        "manager": {
+          "name": "wazuh-manager"
+        },
+        "event_type": "web_access",
+        "data": {
+          "user": "employee02@company.com",
+          "visited_url": "studentlogin.amjaincollege.edu.in",
+          "url_protocol": "http",
+          "url_category": "unsecure",
+          "access_method": "manual_browser_search",
+          "browser": "Google Chrome",
+          "action": "website_visited"
+        },
+        "location": "/var/log/web_access.log",
+        "full_log": "User employee02 accessed a non-secure external website using manual browser search. The website was accessed over HTTP without encryption."
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "440153ab392519db90de0e0e9a1157d199314cea2dca15ebd54d4f2eadabcb78"
+  }
+}
